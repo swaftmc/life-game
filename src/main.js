@@ -72,7 +72,7 @@ const DATA = {
     {k:'multi', label:'Multiracial', bv:4, kcText:'$109,863', w:[22,30,32,16], rentRisk:.35},
     {k:'napi', label:'Native American or Pacific Islander', bv:1, kcText:'$67,324 to $87,235', w:[33,32,27,8], rentRisk:.5}
   ],
-  genders:[{k:'f',label:'Woman',fac:0.90},{k:'m',label:'Man',fac:1.08}],
+  genders:[{k:'f',label:'Woman',fac:0.90,bv:49},{k:'m',label:'Man',fac:1.08,bv:50},{k:'nb',label:'Non-binary',fac:1.00,bv:1}],
   wealth:[
     {label:'Struggling', range:'under $60,000 a year', home:'Rents a small apartment', save:300, adj:-8, gift:0,
      help:'Your family cannot cover emergencies, and they may need help from you.'},
@@ -442,7 +442,7 @@ function oddsPanel(){
   return `<details class="panel" open><summary>How the four cards were dealt</summary><div class="odds" style="margin-top:12px">
     <p>These are the chances the computer used. Each card depends on the one before it, the way it does in real families.</p>
     ${block('1. Race / ethnicity', S.mode==='equal'?'Teacher setting: every group has an equal chance.':"Bellevue's real population.", DATA.races.map(x=>x.label), pct(raceW), id.race)}
-    ${block('2. Gender','',DATA.genders.map(x=>x.label),[50,50],id.gender)}
+    ${block('2. Gender','',DATA.genders.map(x=>x.label),pct([49,50,1]),id.gender)}
     ${block('3. Family wealth', `Chances for ${an(r.label)} ${r.label} player, shaped to match King County household income by race (game estimate).`, DATA.wealth.map(x=>`${x.label} (${x.range})`), pct(r.w), id.wealth)}
     ${block('4. Parent education', `Chances for a "${w.label}" family. Families with more money are more likely to have college degrees (game estimate).`, DATA.pedu.map(x=>x.label), pct(DATA.peduByWealth[id.wealth]), id.pedu)}
   </div>${src('cc')}</details>`;
@@ -507,7 +507,7 @@ ${choiceBtn('uwearly','Apply early to UW (you applied as a junior)','You applied
     <div class="callout"><p><b>Why does college cost money even if you live at home?</b> Besides tuition, students still pay for food, books, a bus pass, a phone, and clothes. UW estimates about ${fmt(DATA.homeLiving)} a year for these when a student lives with family.${id.wealth<=1?' Your family also needs $400 a month from you toward rent and food.':''}</p>${src('uw')}</div>
   </section>`);
   bindChoices(k=>{ 
-    if(k==='uwearly'){ const odds=Math.round(completionOdds('uw',S.id,0)*0.8); if(Math.random()*100 >= odds){ interlude('Early admission decision', `<p>UW sent your rejection in April. You finish high school and pick another path.</p>`, pathScene, 'Pick a path'); return } S.path='uw'; S.mods=5; S.flags.earlyAdmit=true; majorScene(); return }
+    if(k==='uwearly'){ const odds=Math.round(completionOdds('uw',S.id,0)*0.1); if(Math.random()*100 >= odds){ S.stress=clamp(S.stress+25,0,100); interlude('Early admission decision', `<p>UW sent your rejection in April. You finish high school with higher stress (+25 stress). You pick another path.</p>`, pathScene, 'Pick a path'); return } S.path='uw'; S.mods=5; S.flags.earlyAdmit=true; majorScene(); return }
     if(k==='transfer'){ S.path='bc'; S.mods=0; S.flags.transferUW=true; majorScene(); return }
     S.path=k; S.mods=0; if(k==='work') firstJob(); else if(k==='trade') tradeScene(); else majorScene(); 
   });
