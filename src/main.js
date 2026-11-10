@@ -508,7 +508,7 @@ ${choiceBtn('uwearly','Apply early to UW (you applied as a junior)','You applied
   </section>`);
   bindChoices(k=>{ 
     if(k==='uwearly'){ const odds=Math.round(completionOdds('uw',S.id,0)*0.1); if(Math.random()*100 >= odds){ S.stress=clamp(S.stress+25,0,100); interlude('Early admission decision', `<p>UW sent your rejection in April. You finish high school with higher stress (+25 stress). You pick another path.</p>`, pathScene, 'Pick a path'); return } S.path='uw'; S.mods=5; S.flags.earlyAdmit=true; majorScene(); return }
-    if(k==='transfer'){ S.path='bc'; S.mods=0; S.flags.transferUW=true; majorScene(); return }
+    if(k==='transfer'){ S.path='bc'; S.mods=0; S.flags.transferUW=true; S.stress=clamp(S.stress+15,0,100); majorScene(); return }
     S.path=k; S.mods=0; if(k==='work') firstJob(); else if(k==='trade') tradeScene(); else majorScene(); 
   });
 }
