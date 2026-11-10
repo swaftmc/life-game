@@ -588,10 +588,10 @@ function supportScene(){
 
 /* ---- the finish roll (higher is better) ---- */
 function rollWidget(odds, after){
-  const zone = Math.max(8, Math.min(18, Math.round(odds/4)));
+  const zone = Math.max(12, Math.min(20, Math.round(odds/4)));
   const start = Math.round((100-zone)/2);
   const end = start+zone;
-  const html = `<p>Click <b>Stop</b> when the moving bar is inside the green <b>Graduate</b> zone in the middle. The zone is small, so timing matters.</p>
+  const html = `<p>Click <b>Stop</b> when the moving bar is inside the green <b>Graduate</b> zone. The zone size reflects your odds.</p>
   <div class="track" aria-hidden="true"><div class="zone-fail" style="width:${start}%"></div><div class="zone-ok" style="width:${zone}%"><span>Graduate</span></div><div class="zone-fail" style="width:${100-start-zone}%"></div><div class="needle" id="needle" style="left:0%"></div></div>
   <div class="row" style="justify-content:space-between"><span class="num">1</span><span class="num">100</span></div>
   <div class="dice" id="dice" aria-live="polite">–</div><div id="out"></div>
