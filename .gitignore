@@ -1,0 +1,11 @@
+node_modules/
+dist/
+jobs_all.json
+jobs_all.csv
+*.pyc
+__pycache__/
+.env
+.DS_Store
+Thumbs.db
+commit.out
+scripts/_diag.py
