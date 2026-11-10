@@ -190,7 +190,7 @@ function dealIdentity(code, mode){
 // (then +0.5% a year). Each promotion adds half the gap between the median and the top 10%.
 function payFor(j, years, level){ const y=years||0; return j.p10 + (j.pay-j.p10)*Math.min(1,y/10) + (y>10 ? j.pay*0.005*Math.min(10,y-10) : 0) + (level||0)*(j.p90-j.pay)/2 }
 function salaryFor(j, gender, years, level, mult){ return Math.max(DATA.minWageYear, Math.round(payFor(j,years,level)*(gender==null?1:DATA.genders[gender].fac)*(mult||1))) }
-function jobName(){ const l=S.level||0; return l && S.job.up ? S.job.up[l-1] : S.job.n }
+function jobName(){ if(!S||!S.job) return 'student'; const l=S.level||0; return l && S.job.up ? S.job.up[l-1] : S.job.n }
 // Washington Paid Family and Medical Leave: 90% of weekly pay up to half the state average weekly wage, plus 50% above that, capped.
 function pfmlWeekly(w){ if(!w) return 0; const h=DATA.pfml.halfSAWW; return Math.max(DATA.pfml.min, Math.min(DATA.pfml.max, w<=h ? 0.9*w : 0.9*h + 0.5*(w-h))) }
 function leaveLoss(salary, weeks){ const w=salary/52; return Math.round(weeks*Math.max(0, w-pfmlWeekly(w))*0.85) }
@@ -424,12 +424,12 @@ function title(){
 function start(code){
   const id = dealIdentity(code, settings.mode);
   const race = DATA.races[id.race];
-  S = {code, mode:settings.mode, gentle:!!settings.gentle, retire:0, retirePct:0, id, age:18, bank:DATA.wealth[id.wealth].save, stress:20, belong:clamp(Math.round(35+race.bv*0.6),0,100),
+  S = {code, mode:settings.mode, gentle:!!settings.gentle, retire:0, retirePct:0, id, age:15, bank:DATA.wealth[id.wealth].save, stress:20, belong:clamp(Math.round(35+race.bv*0.6),0,100), retired:false, ageRetired:null, sideGig:null, unemployed:true,
        debt:0, loanPay:0, log:[], events:[], flags:{}, cred:[], kids:[], partner:null, partnerId:null, relationships:{}, home:null, housing:null, transport:null, care:null,
         mental:{depression:false, anxiety:false, therapy:false},
         retired:false, ageRetired:null, sideGig:null,
-       history:[], chapters:[], years:0, layoffs:0, familySupport:0, rentRaise:0, chNum:0, school:null, unemployed:false, seen:new Set(), bigSeen:new Set(), pending:[], ongoing:[], ffAdj:0};
-  setStage(18);
+       history:[], chapters:[], years:0, layoffs:0, familySupport:0, rentRaise:0, chNum:0, school:null, unemployed:true, seen:new Set(), bigSeen:new Set(), pending:[], ongoing:[], ffAdj:0};
+  setStage(15);
   note('wealth', `You started adult life with ${fmt(S.bank)} in savings because your family is "${DATA.wealth[id.wealth].label}."`);
   note('race', `About ${race.bv}% of Bellevue shares your racial or ethnic background, which shapes how easy it is to find your community here.`);
   reveal();
@@ -450,10 +450,10 @@ function oddsPanel(){
 function reveal(){
   const id=S.id, r=DATA.races[id.race], g=DATA.genders[id.gender], w=DATA.wealth[id.wealth], p=DATA.pedu[id.pedu];
   show(`<section class="scene">
-    <span class="eyebrow">The deal · age 18</span>
+    <span class="eyebrow">The deal · age 15</span>
     <h2>This is the life you were dealt.</h2>
     <div class="idcard">
-      <div class="row" style="justify-content:space-between;position:relative;z-index:1"><span class="eyebrow">Bellevue resident · age 18</span><span class="num">LIFE CODE ${S.code}</span></div>
+      <div class="row" style="justify-content:space-between;position:relative;z-index:1"><span class="eyebrow">Bellevue resident · age 15</span><span class="num">LIFE CODE ${S.code}</span></div>
       <div class="idgrid">
         <div class="slot flip" style="animation-delay:.05s"><div class="k">Race / ethnicity</div><div class="v">${r.label}</div><div class="d">${S.mode==='equal'?`A 1 in 6 chance (teacher setting). About ${r.bv}% of Bellevue residents.`:`A ${r.bv}% chance: about ${r.bv}% of Bellevue residents.`}</div></div>
         <div class="slot flip" style="animation-delay:.35s"><div class="k">Gender</div><div class="v">${g.label}</div><div class="d">A 1 in 2 chance. Affects your future paycheck.</div></div>
@@ -465,9 +465,25 @@ function reveal(){
     <div class="callout id"><p><b>Why this card?</b> In King County, the typical household headed by someone who is ${r.label} earns <span class="num">${r.kcText}</span> a year. The game deals family wealth using those patterns, so some cards are more common for some groups. It says nothing about any one family.</p>${src('cc')}</div>
     <div class="callout"><p><b>What your family can do for you:</b> ${w.help}</p></div>
     <p>You can't trade this card in. Write your life code (<b class="num">${S.code}</b>) on your sheet.</p>
-    <div class="row"><button class="btn" id="n">I'm 18. What now?</button></div>
+    <div class="row"><button class="btn" id="n">I'm 15. What now?</button></div>
   </section>`);
-  $('#n').onclick=pathScene;
+  $('#n').onclick=highSchoolScene;
+}
+
+function highSchoolScene(){
+  S.age=15; setStage(15);
+  show(`<section class="scene"><span class="eyebrow">Age 15 · High school</span>
+    <h2>You're 15 and in high school.</h2>
+    <p>You live with your family. You can focus on school, or apply early to college. Early admission is harder to get but saves a year.</p>
+    <div class="choices">
+      ${choiceBtn('finish','Finish high school first','Graduate at 18, then pick your path. The normal route.',`${completionOdds('bc',S.id,0)}% odds`)}
+      ${choiceBtn('earlyuw','Apply early to UW','Apply to the University of Washington as a junior. If admitted you start at 18 with a head start; if rejected you finish high school and pick another path.',`${Math.round(completionOdds('uw',S.id,0)*0.8)}% odds`)}
+    </div>
+  </section>`);
+  bindChoices(k=>{
+    if(k==='earlyuw'){ const odds=Math.round(completionOdds('uw',S.id,0)*0.8); if(Math.random()*100 >= odds){ interlude('Early admission decision', `<p>UW sent your rejection in April. You finish high school and pick another path.</p><p>${src('uw')}</p>`, ()=>{ S.age=18; setStage(18); pathScene(); }, 'Pick a path'); return } S.flags.earlyAdmit=true; S.age=18; setStage(18); S.path='uw'; S.mods=5; majorScene(); return }
+    S.age=18; setStage(18); pathScene();
+  });
 }
 
 /* ================= AGE 18: PATH ================= */
@@ -484,11 +500,17 @@ function pathScene(){
       ${choiceBtn('work','Start working full time now',"Earn money right away. You can only get jobs that don't need a degree, but you can go back to school later.",'Start at 18')}
       ${choiceBtn('trade','Apprenticeship in a building trade','Electrician or carpenter. You are paid while you train for 4 years, so there is no college debt. Finish at 22.',`${completionOdds('trade',id,0)}% odds`)}
       ${choiceBtn('bc','Bellevue College (2 years)',collegeBlurb(bc,2)+' Finish at 20.',`${completionOdds('bc',id,0)}% odds`)}
-      ${choiceBtn('uw','University of Washington (4 years)',collegeBlurb(uw,4)+' Finish at 22.',`${completionOdds('uw',id,0)}% odds`)}
+             ${choiceBtn('uw','University of Washington (4 years)',collegeBlurb(uw,4)+' Finish at 22.',`${completionOdds('uw',id,0)}% odds`)}
+${choiceBtn('uwearly','Apply early to UW (you applied as a junior)','You applied to UW as a high school junior. If admitted you start at 18 with a head start; if rejected you finish high school and pick another path. Early applicants are judged on fewer grades, so the odds are lower.',`${Math.round(completionOdds('uw',id,0)*0.8)}% odds`)}
+       ${choiceBtn('transfer','Bellevue College, then transfer to UW','Start at Bellevue College for 2 years, then transfer to UW for your last 2. Cheaper and easier to get into, but you still finish at 22.',`${completionOdds('bc',id,0)}% then ${completionOdds('uw',id,0)}% odds`)}
     </div>
     <div class="callout"><p><b>Why does college cost money even if you live at home?</b> Besides tuition, students still pay for food, books, a bus pass, a phone, and clothes. UW estimates about ${fmt(DATA.homeLiving)} a year for these when a student lives with family.${id.wealth<=1?' Your family also needs $400 a month from you toward rent and food.':''}</p>${src('uw')}</div>
   </section>`);
-  bindChoices(k=>{ S.path=k; S.mods=0; if(k==='work') firstJob(); else if(k==='trade') tradeScene(); else majorScene(); });
+  bindChoices(k=>{ 
+    if(k==='uwearly'){ const odds=Math.round(completionOdds('uw',S.id,0)*0.8); if(Math.random()*100 >= odds){ interlude('Early admission decision', `<p>UW sent your rejection in April. You finish high school and pick another path.</p>`, pathScene, 'Pick a path'); return } S.path='uw'; S.mods=5; S.flags.earlyAdmit=true; majorScene(); return }
+    if(k==='transfer'){ S.path='bc'; S.mods=0; S.flags.transferUW=true; majorScene(); return }
+    S.path=k; S.mods=0; if(k==='work') firstJob(); else if(k==='trade') tradeScene(); else majorScene(); 
+  });
 }
 function jobLine(k){ const j=DATA.jobs[k]; return `<li><span class="jn">${j.n}</span><span class="num">${fmt(j.pay)} median</span>${riskChip(j.risk)}${aiChip(j)}${benChip(j.ben)}</li>` }
 function majorScene(){
@@ -566,16 +588,35 @@ function supportScene(){
 
 /* ---- the finish roll (higher is better) ---- */
 function rollWidget(odds, after){
-  const roll = Math.floor(Math.random()*100)+1, need = 101-odds, ok = roll>=need;
-  const html = `<p>The computer rolls a number from 1 to 100. <b>Higher is better.</b> Roll <b class="num">${need}</b> or higher to finish. The better your odds, the bigger the green zone.</p>
-  <div class="track" aria-hidden="true"><div class="zone-fail" style="width:${need-1}%"></div><div class="zone-ok" style="width:${odds}%"><span>Finish</span></div><div class="needle" id="needle" style="left:0%"></div></div>
+  const zone = Math.max(8, Math.min(18, Math.round(odds/4)));
+  const start = Math.round((100-zone)/2);
+  const end = start+zone;
+  const html = `<p>Click <b>Stop</b> when the moving bar is inside the green <b>Graduate</b> zone in the middle. The zone is small, so timing matters.</p>
+  <div class="track" aria-hidden="true"><div class="zone-fail" style="width:${start}%"></div><div class="zone-ok" style="width:${zone}%"><span>Graduate</span></div><div class="zone-fail" style="width:${100-start-zone}%"></div><div class="needle" id="needle" style="left:0%"></div></div>
   <div class="row" style="justify-content:space-between"><span class="num">1</span><span class="num">100</span></div>
-  <div class="dice" id="dice" aria-live="polite">–</div><div id="out"></div>`;
+  <div class="dice" id="dice" aria-live="polite">–</div><div id="out"></div>
+  <div class="row"><button class="btn" id="stopBtn">Stop</button></div>`;
   return {html, run(){
-    let n=0; const dice=$('#dice'), needle=$('#needle');
+    const needle=$('#needle'), dice=$('#dice'), btn=$('#stopBtn');
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const set=v=>{ dice.textContent=v; needle.style.left=`calc(${v-0.5}% - 2px)`; dice.style.color = v>=need?'var(--good)':'var(--bad)' };
-    const tick=setInterval(()=>{ set(Math.floor(Math.random()*100)+1); if(++n>(reduce?0:16)){ clearInterval(tick); set(roll); after(ok) } },75);
+    let pos = 0, dir = 1, running = true, raf;
+    const step = reduce ? 4 : 2;
+    const tick = setInterval(()=>{
+      if(!running) return;
+      pos += dir*step;
+      if(pos>=100){ pos=100; dir=-1; }
+      if(pos<=0){ pos=0; dir=1; }
+      needle.style.left = `calc(${pos}% - 2px)`;
+      dice.textContent = Math.round(pos);
+    }, 16);
+    btn.onclick = ()=>{
+      if(!running) return;
+      running=false; clearInterval(tick);
+      const ok = pos>=start && pos<=end;
+      dice.style.color = ok?'var(--good)':'var(--bad)';
+      dice.textContent = ok?'Graduate!':'Missed';
+      after(ok);
+    };
   }};
 }
 function rollScene(){
@@ -1162,7 +1203,7 @@ function beginMonthCards(){
     <p>Your paycheck${S.partner?'s':''} came in and your regular bills went out. ${S.bank<0?`Your savings ran out, so you owe <b class="num">${fmt(cardDebt())}</b> on a credit card.`:`You have <b class="num">${fmt(S.bank)}</b> in savings.`}${S.debt>0?` You also owe <b class="num">${fmt(S.debt)}</b> in student loans.`:''}</p>
     <p>Your stress starts at <b class="num">${S.stress}</b> and your belonging at <b class="num">${S.belong}</b>, based on your budget, home, commute, and family. Now life happens: ${S.cards.length} things come up this month.</p>`, nextCard, 'Start the month');
 }
-function hourly(){ return mySalary()/2080 }
+function hourly(){ return (S&&S.job?mySalary():0)/2080 || 15 }
 function oopMax(){ const t=insurance().tier; return t==='strong'?3000:t==='standard'?6000:t==='basic'?10150:0 }
 function bigSurprise(ages){
   const w=S.id.wealth, age=S.age, hasCar=['car','mix','newcar','mixnew'].includes(S.transport.k);
