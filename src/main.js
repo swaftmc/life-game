@@ -807,37 +807,58 @@ function charLabel(c){ const st=charStatus(c.id);
 function eligibleChars(){ return DATA.characters.filter(c => ['stranger','friend'].includes(charStatus(c.id))) }
 function startRelationship(c, theyAsked){
   const pj=DATA.jobs[c.job];
+  const partnerTerm = c.gender === S.id.gender ? 'partner' : S.id.gender === 0 ? 'girlfriend' : 'boyfriend';
   S.flags.partners=(S.flags.partners||0)+1;
   S.partner={job:c.job, years:Math.max(0,S.age-23), name:c.name, charId:c.id};
   S.partnerId=c.id;
   S.relationships={...S.relationships, [c.id]:{status:'partner', since:S.age}};
   event(`Started dating ${c.name} (${pj.n.toLowerCase()})`);
-  note('luck', `At ${S.age} ${theyAsked ? c.name+' asked you to be their boyfriend/girlfriend and you said yes. They' : 'you asked '+c.name+' to be your boyfriend/girlfriend and they said yes. They'} work${c.gender===0?'':'s'} as ${an(pj.n)} ${pj.n.toLowerCase()} and earn${c.gender===0?'':'s'} about ${fmt(partnerSalary())} a year.`);
-  interlude(`Age ${S.age} · Relationship`, `<h2>${theyAsked?c.name+' asked you to be their boyfriend/girlfriend.':'You asked '+c.name+' to be your boyfriend/girlfriend.'}</h2><div class="result"><p>${c.name} works as ${an(pj.n)} <b>${pj.n.toLowerCase()}</b> and earns about <b class="num">${fmt(partnerSalary())}</b> a year.</p></div>${src('onet')}`, babyDecision);
+  note('luck', `At ${S.age} ${theyAsked ? c.name+' asked you to be their ${partnerTerm} and you said yes. They' : 'you asked '+c.name+' to be your ${partnerTerm} and they said yes. They'} work${c.gender===0?'':'s'} as ${an(pj.n)} ${pj.n.toLowerCase()} and earn${c.gender===0?'':'s'} about ${fmt(partnerSalary())} a year.`);
+  interlude(`Age ${S.age} · Relationship`, `<h2>${theyAsked?c.name+' asked you to be their ${partnerTerm}.':'You asked '+c.name+' to be your ${partnerTerm}.'}</h2><div class="result"><p>${c.name} works as ${an(pj.n)} <b>${pj.n.toLowerCase()}</b> and earns about <b class="num">${fmt(partnerSalary())}</b> a year.</p></div>${src('onet')}`, babyDecision);
 }
 function relationshipDecision(){
   if(S.partner){ partnerCheck(); return }
   const pool=eligibleChars();
-  const asker = Math.random()<0.45 && pool.length ? pool[Math.floor(Math.random()*pool.length)] : null;
+  // Reduce pool size - fewer admirers in real life
+  const reducedPool = pool.filter((c,i) => Math.random() > 0.5); // keep ~half
+  const asker = Math.random()<0.45 && reducedPool.length ? reducedPool[Math.floor(Math.random()*reducedPool.length)] : null;
+  // Determine gender terms based on player and asker gender
+  const playerGender = S.id.gender;
+  const askerGender = asker ? asker.gender : null;
+  function termForAsk(cGender){
+    // If genders match (both women or both men), use partner
+    if(cGender === playerGender) return 'partner';
+    // Cross-gender: woman player + man asker = girlfriend, man player + woman asker = boyfriend
+    if(playerGender === 0 && cGender === 1) return 'girlfriend';
+    if(playerGender === 1 && cGender === 0) return 'boyfriend';
+    // Fallback to partner for any other case
+    return 'partner';
+  }
+  function termForYes(cGender){
+    return termForAsk(cGender);
+  }
+  function termForAskBtn(cGender){
+    return termForAsk(cGender);
+  }
   show(`<section class="scene"><span class="eyebrow">Age ${S.age} · Decision 2 of 3 · Relationship</span>
   <h2>Who do you spend time with?</h2>
   <p>Someone can ask you to be their boyfriend/girlfriend, or you can ask them. Starting a relationship means sharing bills and a second paycheck. Job and pay come from that person's field.</p>
-  ${asker?`<div class="callout"><p><b>${asker.name} asks you to be their boyfriend/girlfriend.</b> ${asker.vibe}</p></div>`:''}
-  <div class="choices">${pool.map(c=>{
+  ${asker?`<div class="callout"><p><b>${asker.name} asks you to be their ${termForAsk(askerGender)}.</b> ${asker.vibe}</p></div>`:''}
+  <div class="choices">${reducedPool.map(c=>{
     const asked = asker && asker.id===c.id, pj=DATA.jobs[c.job];
-    return (asked?choiceBtn('accept:'+c.id,'Say yes to '+c.name,"They asked you to be their boyfriend/girlfriend.",'')+
-                    choiceBtn('decline:'+c.id,'Say no','You stay friends, but the chapter moves on.',''):'')
-          +(asker && asker.id===c.id ? '' : choiceBtn('ask:'+c.id,'Ask '+c.name+' to be your boyfriend/girlfriend',`${c.vibe} ${pj.n} pay: about ${fmt(salaryFor(pj,null,Math.max(0,S.age-23)))} a year.`,''));
-  }).join('')}${choiceBtn('single','Stay single this chapter','You keep your own money and time.','')}</div></section>`);
+    return `
+      ${asked ? choiceBtn('accept:'+c.id,'Say yes to '+c.name,`They asked you to be their ${termForYes(c.gender)}.`,'') : choiceBtn('ask:'+c.id,'Ask '+c.name+' to be your ${termForAskBtn(c.gender)}',`${c.vibe} ${pj.n} pay: about ${fmt(salaryFor(pj,null,Math.max(0,S.age-23)))} a year.`,'')}
+    `;
+}).join('')}${choiceBtn('single','Stay single this chapter','You keep your own money and time.','')}</div></section>`);
   bindChoices(k=>{
     if(k==='single'){ babyDecision(); return }
     if(k.startsWith('accept:')){ const c=DATA.characters.find(x=>x.id===k.slice(7)); if(c) startRelationship(c, true); return }
-    if(k.startsWith('decline:')){ const c=DATA.characters.find(x=>x.id===k.slice(8)); if(c){ S.relationships={...S.relationships,[c.id]:{status:'friend'}}; note('luck', `At ${S.age} ${c.name} asked you to be their boyfriend/girlfriend and you said no.`); interlude(`Age ${S.age} · Relationship`, `<h2>You said no.</h2><div class="result"><p>You and ${c.name} stayed friends.</p></div>`, babyDecision) } return }
+    if(k.startsWith('decline:')){ const c=DATA.characters.find(x=>x.id===k.slice(8)); if(c){ S.relationships={...S.relationships,[c.id]:{status:'friend'}}; note('luck', `At ${S.age} ${c.name} asked you to be their ${termForAsk(c.gender)} and you said no.`); interlude(`Age ${S.age} · Relationship`, `<h2>You said no.</h2><div class="result"><p>You and ${c.name} stayed friends.</p></div>`, babyDecision) } return }
     if(!k.startsWith('ask:')) { babyDecision(); return }
     const c=DATA.characters.find(x=>x.id===k.slice(4)); if(!c){ babyDecision(); return }
     const ok=Math.random()<0.6;
     if(ok) startRelationship(c, false);
-    else { S.relationships={...S.relationships,[c.id]:{status:'friend'}}; note('luck', `At ${S.age} you asked ${c.name} to be your boyfriend/girlfriend and they said no, so you stayed friends.`); interlude(`Age ${S.age} · Relationship`, `<h2>${c.name} said no.</h2><div class="result"><p>You stayed friends instead.</p></div>`, babyDecision) }
+    else { S.relationships={...S.relationships,[c.id]:{status:'friend'}}; note('luck', `At ${S.age} you asked ${c.name} to be your ${termForAsk(c.gender)} and they said no, so you stayed friends.`); interlude(`Age ${S.age} · Relationship`, `<h2>${c.name} said no.</h2><div class="result"><p>You stayed friends instead.</p></div>`, babyDecision) }
   });
 }
 function partnerCheck(){
