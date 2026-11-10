@@ -588,7 +588,7 @@ function supportScene(){
 
 /* ---- the finish roll (higher is better) ---- */
 function rollWidget(odds, after){
-  const zone = Math.max(12, Math.min(20, Math.round(odds/4)));
+  const zone = Math.max(20, Math.min(35, Math.round(odds/3)));
   const start = Math.round((100-zone)/2);
   const end = start+zone;
   const html = `<p>Click <b>Stop</b> when the moving bar is inside the green <b>Graduate</b> zone. The zone size reflects your odds.</p>
