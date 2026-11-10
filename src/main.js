@@ -807,7 +807,7 @@ function charLabel(c){ const st=charStatus(c.id);
 function eligibleChars(){ return DATA.characters.filter(c => ['stranger','friend'].includes(charStatus(c.id))) }
 function startRelationship(c, theyAsked){
   const pj=DATA.jobs[c.job];
-  const partnerTerm = c.gender === S.id.gender ? 'partner' : S.id.gender === 0 ? 'girlfriend' : 'boyfriend';
+  const partnerTerm = 'partner';
   S.flags.partners=(S.flags.partners||0)+1;
   S.partner={job:c.job, years:Math.max(0,S.age-23), name:c.name, charId:c.id};
   S.partnerId=c.id;
@@ -826,12 +826,7 @@ function relationshipDecision(){
   const playerGender = S.id.gender;
   const askerGender = asker ? asker.gender : null;
   function termForAsk(cGender){
-    // If genders match (both women or both men), use partner
-    if(cGender === playerGender) return 'partner';
-    // Cross-gender: woman player + man asker = girlfriend, man player + woman asker = boyfriend
-    if(playerGender === 0 && cGender === 1) return 'girlfriend';
-    if(playerGender === 1 && cGender === 0) return 'boyfriend';
-    // Fallback to partner for any other case
+    // Always use 'partner' to avoid gender-specific term issues
     return 'partner';
   }
   function termForYes(cGender){
@@ -842,7 +837,7 @@ function relationshipDecision(){
   }
   show(`<section class="scene"><span class="eyebrow">Age ${S.age} · Decision 2 of 3 · Relationship</span>
   <h2>Who do you spend time with?</h2>
-  <p>Someone can ask you to be their boyfriend/girlfriend, or you can ask them. Starting a relationship means sharing bills and a second paycheck. Job and pay come from that person's field.</p>
+  <p>Someone can ask you to be their partner, or you can ask them. Starting a relationship means sharing bills and a second paycheck. Job and pay come from that person's field.</p>
   ${asker?`<div class="callout"><p><b>${asker.name} asks you to be their ${termForAsk(askerGender)}.</b> ${asker.vibe}</p></div>`:''}
   <div class="choices">${reducedPool.map(c=>{
     const asked = asker && asker.id===c.id, pj=DATA.jobs[c.job];
@@ -1810,3 +1805,8 @@ function report(){
 
 title();
 
+
+function activitiesScene(){show('<section class="scene"><span class="eyebrow">Activities</span><h2>Side activities and mini-games</h2><p>Choose an activity to pass the time and earn extra money or gain benefits.</p><div class="choices">' + choiceBtn('sidegig','Take a side gig','Earn extra money on the side. Available gigs vary by age and skills.','') + '' + choiceBtn('garagesale','Have a garage sale','Sell unwanted items at home. Good for clearing clutter and making quick cash.','') + '' + choiceBtn('train','Job training','Participate in workplace training to improve your skills and increase future pay.','') + '' + choiceBtn('donate','Charitable donation','Donate to charity. Reduces your savings but may increase belonging.','') + '' + choiceBtn('petadopt','Pet adoption','Adopt a pet from the shelter. Provides companionship and stress relief.','') + '' + choiceBtn('stockmarket','Stock market event','Invest in the stock market. Prices may rise or fall based on economic conditions.','') + '' + choiceBtn('promotion','Job promotion','Seek a promotion at work. Extra projects and weekend prep for a month.','') + '' + choiceBtn('back','Back to game','Return to the main life simulation.','') + '</div></section>');bindChoices(k=>{if(k==='back'){reveal(); return }if(k==='sidegig'){ sideGigScene(); return }if(k==='garagesale'){ garageSaleScene(); return }if(k==='train'){ trainingScene(); return }if(k==='donate'){ donateScene(); return }if(k==='petadopt'){ petAdoptScene(); return }if(k==='stockmarket'){ stockMarketScene(); return }if(k==='promotion'){ promotionScene(); return }})}
+
+/* Permanent activities button */
+document.addEventListener('DOMContentLoaded', function() { var btn = document.createElement('button'); btn.id = 'permaActivitiesBtn'; btn.className = 'btn'; btn.style.cssText = 'position:fixed;top:10px;right:10px;padding:6px 12px;font-size:1rem;background:#0066cc;color:white;border:none;border-radius:4px;z-index:1000'; btn.textContent = 'Activities'; btn.onclick = function() { activitiesScene(); }; document.body.appendChild(btn); });
