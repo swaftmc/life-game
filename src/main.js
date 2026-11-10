@@ -84,11 +84,11 @@ const DATA = {
      help:'Your family pays for college, covers emergencies, and will give $100,000 toward a home.'}
   ],
   pedu:[
-    {label:"Didn't finish high school", odds:45},
+    {label:"Didn't finish high school", odds:40},
     {label:'High school diploma', odds:50},
-    {label:'Some college, no degree', odds:58},
-    {label:"One parent has a bachelor's degree", odds:68},
-    {label:"Both parents have a bachelor's degree or more", odds:82}
+    {label:'Some college, no degree', odds:45},
+    {label:"One parent has a bachelor's degree", odds:65},
+    {label:"Both parents have a bachelor's degree or more", odds:75}
   ],
   peduByWealth:[[22,38,22,14,4],[6,27,30,27,10],[1,7,17,35,40],[0,2,6,27,65]],
   uwTuition:13406, bcTuition:4935, homeLiving:10638, awayLiving:23340,
